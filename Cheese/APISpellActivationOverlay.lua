@@ -164,12 +164,38 @@ local function BuffLost(spellID)
 	end
 end
 
+local function GetMacroActionSpellID(action)
+	local actionType, macroIndex = GetActionInfo(action);
+	if ( actionType ~= "macro" ) then
+		return nil;
+	end
+	local spellName, rank = GetMacroSpell(macroIndex);
+	if ( not spellName ) then
+		return nil;
+	end
+	local link = GetSpellLink(spellName, rank);
+	if ( not link ) then
+		return nil;
+	end
+	return tonumber(link:match("Hspell:(%d+)"));
+end
+
+local function GetActionSpellID(action)
+	local actionType, id, subType, globalID = GetActionInfo(action);
+	if ( actionType == "spell" ) then
+		return globalID;
+	elseif ( actionType == "macro" ) then
+		return GetMacroActionSpellID(action);
+	end
+	return nil;
+end
+
 local function eventFrame1_OnEventActionbarSlotChanged(self, event, action)
 	if ( action ~= 0 ) then
-		local actionType, id, subType, globalID = GetActionInfo(action);
-		if ( actionType == "spell" ) then
-			if ( actionButtons[action] ~= globalID ) then
-				ChangeAction(action, globalID);
+		local newGlobalID = GetActionSpellID(action);
+		if ( newGlobalID ) then
+			if ( actionButtons[action] ~= newGlobalID ) then
+				ChangeAction(action, newGlobalID);
 			end
 		else
 			if ( actionButtons[action] ) then
@@ -178,10 +204,10 @@ local function eventFrame1_OnEventActionbarSlotChanged(self, event, action)
 		end
 	else
 		for action=1, NUM_ACTION_BUTTONS do
-			local actionType, id, subType, globalID = GetActionInfo(action);
-			if ( actionType == "spell" ) then
-				if ( actionButtons[action] ~= globalID ) then
-					ChangeAction(action, globalID);
+			local newGlobalID = GetActionSpellID(action);
+			if ( newGlobalID ) then
+				if ( actionButtons[action] ~= newGlobalID ) then
+					ChangeAction(action, newGlobalID);
 				end
 			else
 				if ( actionButtons[action] ) then
@@ -235,8 +261,8 @@ local function eventFrame1_OnEventPlayerLogin(self)
 	eventFrame1:UnregisterEvent("PLAYER_LOGIN");
 	do
 		for action=1, NUM_ACTION_BUTTONS do
-			local actionType, id, subType, globalID = GetActionInfo(action);
-			if ( actionType == "spell" ) then
+			local globalID = GetActionSpellID(action);
+			if ( globalID ) then
 				SetAction(action, globalID);
 			end
 		end

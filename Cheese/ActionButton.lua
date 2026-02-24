@@ -38,9 +38,25 @@ function CheeseActionButton_GetOverlayGlow()
 	return overlay;
 end
 
+-- Returns the globalID of the spell on this action button, whether it's a
+-- direct spell slot or a macro. Returns nil if the button has no spell.
+local function GetActionButtonSpellID(self)
+	local actionType, id, subType, globalID = GetActionInfo(self.action);
+	if ( actionType == "spell" ) then
+		return globalID;
+	elseif ( actionType == "macro" ) then
+		local spellName, rank = GetMacroSpell(id);
+		if ( not spellName ) then return nil; end
+		local link = GetSpellLink(spellName, rank);
+		if ( not link ) then return nil; end
+		return tonumber(link:match("Hspell:(%d+)"));
+	end
+	return nil;
+end
+
 function CheeseActionButton_UpdateOverlayGlow(self)
-	local spellType, id, subType, globalID = GetActionInfo(self.action);
-	if ( spellType == "spell" and Cheese_IsSpellOverlayed(globalID) ) then
+	local spellID = GetActionButtonSpellID(self);
+	if ( spellID and Cheese_IsSpellOverlayed(spellID) ) then
 		CheeseActionButton_ShowOverlayGlow(self);
 	else
 		CheeseActionButton_HideOverlayGlow(self);
@@ -100,15 +116,17 @@ end
 hooksecurefunc("ActionButton_OnEvent", CheeseActionButton_OnEvent);
 
 function CheeseActionButton_OnEventOverlayGlowShow(self, arg1)
-	local actionType, id, subType, globalID = GetActionInfo(self.action);
-	if ( actionType == "spell" and globalID == arg1 ) then
+	-- arg1 = globalID of the spell whose glow just became active.
+	-- Fire if this button's spell (direct or via macro) matches.
+	local spellID = GetActionButtonSpellID(self);
+	if ( spellID and spellID == arg1 ) then
 		CheeseActionButton_ShowOverlayGlow(self);
 	end
 end
 
 function CheeseActionButton_OnEventOverlayGlowHide(self, arg1)
-	local actionType, id, subType, globalID = GetActionInfo(self.action);
-	if ( actionType == "spell" and globalID == arg1 ) then
+	local spellID = GetActionButtonSpellID(self);
+	if ( spellID and spellID == arg1 ) then
 		CheeseActionButton_HideOverlayGlow(self);
 	end
 end
