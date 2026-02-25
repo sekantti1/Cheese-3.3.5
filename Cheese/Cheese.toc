@@ -1,7 +1,8 @@
 ## Interface: 30300
 ## Notes: Cataclysm Visual Alerts
 ## SavedVariablesPerCharacter: cheeseDisplaySpellActivationOverlays, cheeseSpellActivationOverlayOpacity
-## Version: 1.0
+## Version: 1.1
+## Update by sekantti1
 Data.lua
 APIAnimation.xml
 APISpellActivationOverlay.lua
